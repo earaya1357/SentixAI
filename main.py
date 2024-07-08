@@ -7,29 +7,26 @@ import numpy as np
 import sqlite3 as sql
 from pydantic import validate_call
 from log.logger import log
-from db.dbcalls import dbconnect, dbsetup, recordsentimentscoresingle
+from db.dbcalls import dbconnect, dbcreate, recordsentimentscoresingle
 import os
-import subprocess
 
 
 
 #Setup for the page and database for temporary storage
 st.set_page_config(layout="wide")
 log('Starting fastapi')
-#try:
-#    process = subprocess.Popen(["fastapi", "dev", "sentimentapi.py"], shell=True)
-#    process.wait()
-#except Exception as e:
-#    log(e)
+
 
 log('Logging Started.')
-if not os.path.isfile('db/Test.db'):
+if not os.path.isfile('db/Base.db'):
     log('Starting database modal')
-    dbsetup()
+    dbcreate()
 else:
     log('Database found attempting to connect')
-    conn = dbconnect('Test')
-    log('Connected to database')
+    conn = dbconnect()
+    if conn:
+        log('Connected to database')
+    
 
 #Top row in the UI for general text analysis
 with st.container(height=375):    
@@ -51,13 +48,14 @@ with st.container(height=375):
             st.table(alldata)
             log('Sentiment analysis successfully completed')
             #Setup the sql command to record data in the recordsentimentscoresingle function.
-            recordsentimentscoresingle(conn, alldata.transpose())
+            analysisdata = alldata.transpose()
+            recordsentimentscoresingle(conn, 'TestProduct1', params['comment'], analysisdata)
         except Exception as e:
             log(e)
             st.write(e)
 
 #Row to set parameters for the graphs and track progress over time.
-with st.expander('Progress Tracking'):
+with st.expander('Progress Tracking', expanded=True):
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -80,7 +78,7 @@ with st.expander('Progress Tracking'):
         st.plotly_chart(p2)
 
 #Row to show the results and actions that should be taken.
-with st.expander('Results and Actions'):
+with st.expander('Results and Actions', expanded=True, icon='🔥'):
     col4, col5 = st.columns(2)
     with col4:
         st.text_area(label='Results', value='Results of the sentiment')
