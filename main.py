@@ -4,27 +4,59 @@ import requests
 import pandas as pd
 import plotly.express as px
 import numpy as np
+import sqlite3 as sql
+from pydantic import validate_call
+from log.logger import log
+from db.dbcalls import dbconnect, dbsetup, recordsentimentscoresingle
+import os
+import subprocess
 
-#COLUMNS = ['Sentiment', 'Strength', 'Vader Score', 'Explanation', 'Tasks']
+
+
+#Setup for the page and database for temporary storage
 st.set_page_config(layout="wide")
+log('Starting fastapi')
+#try:
+#    process = subprocess.Popen(["fastapi", "dev", "sentimentapi.py"], shell=True)
+#    process.wait()
+#except Exception as e:
+#    log(e)
 
+log('Logging Started.')
+if not os.path.isfile('db/Test.db'):
+    log('Starting database modal')
+    dbsetup()
+else:
+    log('Database found attempting to connect')
+    conn = dbconnect('Test')
+    log('Connected to database')
+
+#Top row in the UI for general text analysis
 with st.container(height=375):    
     st.text_area(height=150,label='Input Text',key='sentiment_text', value='This is a phenomenal amazing app! The price is a bit high though')    
 
     st.text_input(label='Industry')
 
     if st.button('Analyze Sentiment'):
-        params = {'comment': st.session_state.sentiment_text}
-        response = requests.get(f'http://127.0.0.1:8000/basicsentiment/company/product', params=params)
-        
-        if response.status_code != 200:
-            st.write(response.status_code)
-        
-        jresponse = response.json()
-        alldata = pd.DataFrame.from_dict(jresponse['answer'], orient='index')
-        #alldata = alldata.transpose()
-        st.table(alldata)
+        log('Starting sentiment analysis')
+        try:
+            params = {'comment': st.session_state.sentiment_text}
+            response = requests.get(f'http://127.0.0.1:8000/basicsentiment/company/product', params=params)
+            
+            if response.status_code != 200:
+                st.write(response.status_code)
+            
+            jresponse = response.json()
+            alldata = pd.DataFrame.from_dict(jresponse['answer'], orient='index')
+            st.table(alldata)
+            log('Sentiment analysis successfully completed')
+            #Setup the sql command to record data in the recordsentimentscoresingle function.
+            recordsentimentscoresingle(conn, alldata.transpose())
+        except Exception as e:
+            log(e)
+            st.write(e)
 
+#Row to set parameters for the graphs and track progress over time.
 with st.expander('Progress Tracking'):
     col1, col2, col3 = st.columns(3)
     
@@ -47,6 +79,7 @@ with st.expander('Progress Tracking'):
         p2 = px.line(df, x='Month', y='Change')
         st.plotly_chart(p2)
 
+#Row to show the results and actions that should be taken.
 with st.expander('Results and Actions'):
     col4, col5 = st.columns(2)
     with col4:
@@ -54,3 +87,5 @@ with st.expander('Results and Actions'):
 
     with col5:
         st.text_area(label='Reommended Tasks', value='Tasks to try from sentment')
+
+
