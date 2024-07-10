@@ -24,7 +24,7 @@ safety_settings={
 model = genai.GenerativeModel(model_name='gemini-1.5-flash',
                               generation_config=config,
                               safety_settings=safety_settings,
-                                system_instruction="Perform sentiment analysis on incoming texts for products. Provide the strength level of each sentiment score. Provide the output as sentiment: score, strength: score (with number), vader_score: score, explanation: text, tasks: potential tasks to improve the sentiment",
+                                system_instruction="Perform sentiment analysis on incoming texts for products. Provide the strength level of each sentiment score. Provide the output as in a json format as sentiment: score, strength: score (with number), vader_score: score, explanation: text, tasks: potential tasks to improve the sentiment",
 )
 
 def askgemini(question: str):

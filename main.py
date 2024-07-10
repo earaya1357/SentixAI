@@ -1,27 +1,23 @@
 import streamlit as st
-from sentimentapi import basicsentiment
-import requests
 import pandas as pd
 import plotly.express as px
-import numpy as np
-import sqlite3 as sql
-from pydantic import validate_call
 from log.logger import log
-from db.dbcalls import dbconnect, dbcreate, recordsentimentscoresingle
-import os
+from db.dbcalls import dbconnect, dbcreate, recordsentimentscoresingle, readsentimentscorehistory
+import os, json
 from datetime import datetime as dt
+from geminiapi import askgemini
 
 
 
 #Setup for the page and database for temporary storage
 
-def main(state):
+def main(state=False):
     st.set_page_config(layout="wide")
-    log('Starting fastapi')
+    log('Starting Application')
     if st.session_state.startup == False:
         log('Logging Started.')
         if not os.path.isfile('db/Base.db'):
-            log('Starting database modal')
+            log('Starting database')
             dbcreate()
             st.session_state.startup = True
         else:
@@ -42,19 +38,25 @@ def main(state):
         if st.button('Analyze Sentiment'):
             log('Starting sentiment analysis')
             try:
-                params = {'comment': st.session_state.sentiment_text}
-                response = requests.get(f'http://127.0.0.1:8000/basicsentiment/company/product', params=params)
                 
-                if response.status_code != 200:
-                    st.write(response.status_code)
+                jresponse = askgemini(st.session_state.sentiment_text)
                 
-                jresponse = response.json()
-                alldata = pd.DataFrame.from_dict(jresponse['answer'], orient='index')
-                tasks = jresponse['answer']['tasks']
+                if not jresponse:
+                    log('No response from Gemini')
+                    return
+                
+                log('Response received from Gemini')
+                jresponse = jresponse.replace('`','').replace('json','')
+                jresponse = json.loads(jresponse)
+                alldata = pd.DataFrame.from_dict(jresponse, orient='index')
                 datatable = True
+
                 log('Sentiment analysis successfully completed')
                 analysisdata = alldata.transpose()
-                recordsentimentscoresingle(conn, 'TestProduct1', params['comment'], analysisdata)
+                tasks = analysisdata['tasks'][0]
+
+
+                recordsentimentscoresingle(conn, 'TestProduct2', st.session_state.sentiment_text, analysisdata)
             except Exception as e:
                 log(e)
                 st.write(e)
@@ -83,7 +85,7 @@ def main(state):
             #SAMPLE DATA
             df = pd.DataFrame({'Month':['Jan', 'Feb', 'Mar', 'Apr', 'May'], 'Change': [20, 30, 35, 35, 40]})
             p2 = px.line(df, x='Month', y='Change')
-            st.plotly_chart(p2)
+            st.plotly_chart(p2)                
 
 
     #Row to show the results and actions that should be taken.
@@ -93,7 +95,14 @@ def main(state):
             st.write('Results')
             if datatable:
                 scores = alldata.loc[['sentiment', 'strength', 'vader_score', 'explanation']]
-                st.table(scores)
+                st.data_editor(scores, 
+                               column_config={
+                                   '': 'Metric',
+                                   '0': 'Score',
+                               },
+                               disabled=['Score'])
+                log('Generated sentiment score table')
+                readsentimentscorehistory(conn=conn, product='TestProduct1')
             else: 
                 st.write('Run Sentiment Analysis to display results')
 
@@ -112,10 +121,11 @@ def main(state):
                                 },
                             hide_index=True,
                             disabled=['Tasks'])
+                log('Generated tasks table')
 
 
 
-if __name__ == '__main__':
-    st.session_state.startup = False
-    main(st.session_state.startup)
+#if __name__ == '__main__':
+st.session_state.startup = False
+main(st.session_state.startup)
 
