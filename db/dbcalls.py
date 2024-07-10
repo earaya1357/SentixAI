@@ -50,12 +50,9 @@ def recordsentimentscoresingle(conn: sql.Connection, product:str, comment:str, d
 def readsentimentscorehistory(conn: sql.Connection, product: str)->pd.DataFrame:
     try:
         log('Attmpting to connect and ready sentiment history')
-        #cur = conn.cursor()
-        q = 'SELECT * from SingleSentiment WHERE productname=TestProduct1'
+        q = f"SELECT * from SingleSentiment WHERE productname='{product}';"
         df = pd.read_sql_query(q, conn)
-        #res = cur.execute('SELECT * from SingleSentiment WHERE productname=?', (product))
-        #res.fetchall()
-        print(df.head())
+        return df
     except Exception as e:
         log(e)
         return e

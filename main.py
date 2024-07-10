@@ -74,6 +74,10 @@ def main(state=False):
                 st.date_input('Ending Date', value='today', key='end_date')
             st.text_area(label='Industry Section')
             st.text_area(label='Text Sample Selection', value='Sample information')
+            if st.button('Run Time Sentiment'):
+                history = readsentimentscorehistory(conn=conn, product='TestProduct1')
+                st.dataframe(history)
+
         with col2:
             st.write('Sentiment Topics')
             #SAMPLE DATA
@@ -102,7 +106,6 @@ def main(state=False):
                                },
                                disabled=['Score'])
                 log('Generated sentiment score table')
-                readsentimentscorehistory(conn=conn, product='TestProduct1')
             else: 
                 st.write('Run Sentiment Analysis to display results')
 
