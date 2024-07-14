@@ -4,25 +4,33 @@ from log.logger import log
 import streamlit as st
 import pandas as pd
 from datetime import datetime as dt
+from typing import Union
+from sqlalchemy import create_engine 
+
 
 #@validate_call
-def dbcreate()->None:
+def dbcreate() -> Union[None, str]:
     try:
-        conn = sql.connect(f'db/Base.db')
-        log('Created Database')
-        cur = conn.cursor()
-        cur.execute('CREATE TABLE  IF NOT EXISTS CompanyInfo(name TEXT, key TEXT)')
-        conn.commit()
-        cur.execute('CREATE TABLE IF NOT EXISTS Products(id INTEGER PRIMARY KEY AUTOINCREMENT, productname TEXT, comment TEXT)')
-        conn.commit()
-        cur.execute('CREATE TABLE IF NOT EXISTS SingleSentiment(id INTEGER PRIMARY KEY AUTOINCREMENT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, productname TEXT, comment TEXT, sentiment REAL, strength INTEGER, vader_score REAL, explanation TEXT, tasks TEXT)')
-        conn.commit()
-        conn.close()
-        log('Created Tables CompanyInfo, Products, SingleSentiment')
+        with sql.connect('db/Base.db') as conn:
+            log('Created Database')
+            cur = conn.cursor()
+            
+            cur.execute('CREATE TABLE IF NOT EXISTS CompanyInfo(name TEXT, key TEXT)')
+            log('Created Table: CompanyInfo')
+            
+            cur.execute('CREATE TABLE IF NOT EXISTS Products(id INTEGER PRIMARY KEY AUTOINCREMENT, productname TEXT, comment TEXT)')
+            log('Created Table: Products')
+            
+            cur.execute('CREATE TABLE IF NOT EXISTS SingleSentiment(id INTEGER PRIMARY KEY AUTOINCREMENT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, productname TEXT, comment TEXT, sentiment TEXT, strength INTEGER, vader_score REAL, explanation TEXT, tasks TEXT)')
+            log('Created Table: SingleSentiment')
+            
+            conn.commit()
+            
     except Exception as e:
-        log(f'Database Creation: {e}')
-        print(e)
-        return e
+        log(f'Database Creation Error: {e}')
+        return str(e)
+
+    return None
     
 def dbconnect()->sql.Connection|str:
     try:
@@ -47,12 +55,39 @@ def recordsentimentscoresingle(conn: sql.Connection, product:str, comment:str, d
         return e
     
 
-def readsentimentscorehistory(conn: sql.Connection, product: str)->pd.DataFrame:
+def readsentimentscorehistory(product: str) -> Union[pd.DataFrame, str]:
     try:
-        log('Attmpting to connect and ready sentiment history')
-        q = f"SELECT * from SingleSentiment WHERE productname='{product}';"
-        df = pd.read_sql_query(q, conn)
+        log('Attempting to connect and read sentiment history')
+        engine = create_engine('sqlite:///db/Base.db')
+        df = pd.read_sql(f"SELECT productname, Timestamp, comment, sentiment, strength, vader_score FROM SingleSentiment WHERE productname='{product}'", 
+                         engine)
+        df = df.rename({'productname': 'Name', 'Timestamp': 'TimeStamp', 'comment':'Comment', 'sentiment':'Sentiment', 'strength': 'Strength', 'vader_score': 'VaderScore'})
         return df
+    except Exception as e:
+        log(f"An error occurred: {e}")
+        return str(e)
+
+def addproduct(conn: sql.Connection, product_name: str)->str|None:
+    try:
+        log('Attempting to record product name.')
+        cur = conn.cursor()
+        cur.execute(f"INSERT INTO Products(productname) VALUES('{product_name}')")
+        conn.commit()
+        log('Product recorded successfully')
+    except Exception as e:
+        log(e)
+        return e
+    
+def getproductnames(conn: sql.Connection)->list[str]|str:
+    try:
+        log('Attempting to get product names.')
+        conn.row_factory = lambda cursor, row: row[0]
+        cur = conn.cursor()
+        cur.execute("SELECT productname FROM Products")
+        data = cur.fetchall()
+        conn.commit()
+        log('Product recordeds successfully retrieved')
+        return data
     except Exception as e:
         log(e)
         return e
