@@ -10,8 +10,6 @@ from models.Models import NewUser, User, Part, Sentiment
 #Mongodb connection and data collection function
 def connection()->MongoClient|str:
     """Creates the connection needed to access the database."""
-    with open('data.pickle', 'rb') as handle:
-        b = pickle.load(handle)
     try:
         uri = f"mongodb+srv://temp:VLzh8cnDVOMHt1AF@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
