@@ -11,7 +11,7 @@ from models.Models import NewUser, User, Part, Sentiment
 def connection()->MongoClient|str:
     """Creates the connection needed to access the database."""
     try:
-        uri = f"mongodb+srv://temp:VLzh8cnDVOMHt1AF@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
+        uri = f"mongodb+srv://temp:@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
         return client
     except Exception as e:
