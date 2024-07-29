@@ -1,93 +1,123 @@
-import sqlite3 as sql
-from pydantic import validate_call
 from log.logger import log
-import streamlit as st
-import pandas as pd
-from datetime import datetime as dt
-from typing import Union
-from sqlalchemy import create_engine 
+import certifi
+import pickle
+from pydantic import SecretStr
+from pymongo.mongo_client import MongoClient
+from pymongo.collation import Collation
+from models.Models import NewUser, User, Part, Sentiment
 
 
-#@validate_call
-def dbcreate() -> Union[None, str]:
+#Mongodb connection and data collection function
+def connection()->MongoClient|str:
+    """Creates the connection needed to access the database."""
+    with open('data.pickle', 'rb') as handle:
+        b = pickle.load(handle)
     try:
-        with sql.connect('db/Base.db') as conn:
-            log('Created Database')
-            cur = conn.cursor()
-            
-            cur.execute('CREATE TABLE IF NOT EXISTS CompanyInfo(name TEXT, key TEXT)')
-            log('Created Table: CompanyInfo')
-            
-            cur.execute('CREATE TABLE IF NOT EXISTS Products(id INTEGER PRIMARY KEY AUTOINCREMENT, productname TEXT, comment TEXT)')
-            log('Created Table: Products')
-            
-            cur.execute('CREATE TABLE IF NOT EXISTS SingleSentiment(id INTEGER PRIMARY KEY AUTOINCREMENT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, productname TEXT, comment TEXT, sentiment TEXT, strength INTEGER, vader_score REAL, explanation TEXT, tasks TEXT)')
-            log('Created Table: SingleSentiment')
-            
-            conn.commit()
-            
+        uri = f"mongodb+srv://temp:VLzh8cnDVOMHt1AF@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
+        client = MongoClient(uri, tlsCAFile=certifi.where())
+        return client
     except Exception as e:
-        log(f'Database Creation Error: {e}')
-        return str(e)
+        log(f'Mongo Connection: {e}')
 
-    return None
+
+#Get existing user information function
+def getuser(client: MongoClient, username: str, password: SecretStr)->tuple[bool, Collation]|tuple[bool,str]:
+    """Returns an instance of a user or an error."""
+    db = client['SentixAI']
+    collection = db['Users']
+    try:
+        data = collection.find_one({'username': username, 'password': password}, {'password':0, 'repassword':0, 'age':0})
+        log('Data collected and returned')
+        user = User(**dict(data))
+        return True, user
+    except Exception as e:
+        log(f'Get User Error: {e}')
+        return False, f'No user found with this username/password'
+
+
+#Create a new user fuction
+def createuser(client: MongoClient, data: dict)->bool|str:
+    """Creates a new user and stores the information in the database."""
+    db = client['SentixAI']
+    collection = db['Users']
+    try:
+        newuser = NewUser(**data)
+
+    except Exception as e:
+        log(f'User Data Input Error: {e}')
+        return f'User Data Input Error: {e}'
     
-def dbconnect()->sql.Connection|str:
     try:
-        log('Connecting to database')
-        conn = sql.connect(f'db/Base.db')
-        return conn
+        collection.insert_one(newuser.__dict__)
+        log('Successfully created the user')
+        return True
     except Exception as e:
-        log(e)
-        return e
+        log(f'Create User Error: {e}')
+        return f'Create User Error: {e}'
 
-#@validate_call
-def recordsentimentscoresingle(conn: sql.Connection, product:str, comment:str, data:pd.DataFrame)->str|None:
+
+def createpart(client: MongoClient, data: dict)->tuple[bool,str]|tuple[bool,str]:
+    """Creates a new part and stores the information in the database."""
+    db = client['SentixAI']
+    collection = db['Parts']
     try:
-        log('Attempting to record single sentiment analysis.')
-        cur = conn.cursor()
-        cur.execute('INSERT INTO SingleSentiment(productname, comment, sentiment, strength, vader_score, explanation, tasks) VALUES(?, ?, ?, ?, ?, ?, ?)', (product, comment, data['sentiment'][0], data['strength'][0], data['vader_score'][0], data['explanation'][0], str(data['tasks'][0])))
-        conn.commit()
-        log('Single sentiment analysis recorded successfully')
-        return 'Success'
+        part = Part(**data)
     except Exception as e:
-        log(e)
-        return e
+        log(f'Part Data Input Error: {e}')
+        return f'Part Data Input Error: {e}'
+    try:
+        collection.insert_one(part.__dict__)
+        log('Successfully created the part')
+        return True, 'Part create successfully'
+    except Exception as e:
+        log(f'Create Part Error: {e}')
+        return False, f'Create Part Error: {e}'
+
+
+def getallparts(client: MongoClient, company:str):
+    """Retrieves all parts from the database based on the company."""
+    db = client['SentixAI']
+    collection = db['Parts']
+    try:
+        data = collection.find({'company': company}, {'partname'})
+        log('Part data collected and returned')
+        parts = [i['partname'] for i in data]
+        return True, parts
+    except Exception as e:
+        log(f'Get Parts Error: {e}')
+        return False, f'No parts found with company: {e}'
+
+
+
+def recordsentiment(client: MongoClient, data:dict)->tuple[bool,str]:
+    """Records the performed sentimet analysis"""
+    db = client['SentixAI']
+    collection = db['Analysis']
+    try:
+        sentiment = Sentiment(**data)
+    except Exception as e:
+        log(f'Sentiment Anlysis Error: {e}')
+        print(f'Sentiment Anlysis Error: {e}')
+        return False, f'Sentiment Anlysis Error: {e}'
+    try:
+        collection.insert_one(sentiment.__dict__)
+        return True, 'Sentiment recorded'
+    except Exception as e:
+        log(f'Sentiment Analysis Upload Error: {e}')
+        print(f'Sentiment Analysis Upload Error: {e}')
+        return False, f'Sentiment Analysis Upload Error: {e}'
     
 
-def readsentimentscorehistory(product: str) -> Union[pd.DataFrame, str]:
+def sentimentoverview(client: MongoClient, company:str, productname:str):
+    """Retrieves the full history of sentiment anlaysis"""
+    db = client['SentixAI']
+    collection = db['Analysis']
     try:
-        log('Attempting to connect and read sentiment history')
-        engine = create_engine('sqlite:///db/Base.db')
-        df = pd.read_sql(f"SELECT productname, Timestamp, comment, sentiment, strength, vader_score FROM SingleSentiment WHERE productname='{product}'", 
-                         engine)
-        df = df.rename({'productname': 'Name', 'Timestamp': 'TimeStamp', 'comment':'Comment', 'sentiment':'Sentiment', 'strength': 'Strength', 'vader_score': 'VaderScore'})
-        return df
-    except Exception as e:
-        log(f"An error occurred: {e}")
-        return str(e)
+        sentiments = collection.find({'company': company, 'productname': productname}, {'_id':0, 'tasks': 0})
+        log('Part data collected and returned')
 
-def addproduct(conn: sql.Connection, product_name: str)->str|None:
-    try:
-        log('Attempting to record product name.')
-        cur = conn.cursor()
-        cur.execute(f"INSERT INTO Products(productname) VALUES('{product_name}')")
-        conn.commit()
-        log('Product recorded successfully')
+        return True, sentiments
     except Exception as e:
-        log(e)
-        return e
-    
-def getproductnames(conn: sql.Connection)->list[str]|str:
-    try:
-        log('Attempting to get product names.')
-        conn.row_factory = lambda cursor, row: row[0]
-        cur = conn.cursor()
-        cur.execute("SELECT productname FROM Products")
-        data = cur.fetchall()
-        conn.commit()
-        log('Product recordeds successfully retrieved')
-        return data
-    except Exception as e:
-        log(e)
-        return e
+        log(f'Get Parts Error: {e}')
+        print(e)
+        return False, f'No parts found with company: {e}'
