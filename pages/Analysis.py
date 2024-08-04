@@ -44,7 +44,7 @@ if st.session_state['loggedin']:
 
 
     _, product_names = getallparts(st.session_state['connection'], st.session_state['session_info'].company)
-    st.text_area(height=150,label='Input Text',key='sentiment_text', value='This is a phenomenal amazing app! The price is a bit high though')    
+    st.text_area(height=150,label='Input Text',key='sentiment_text')    
     st.selectbox(label='Products', options=product_names, key='product')
 
 
@@ -73,8 +73,6 @@ if st.session_state['loggedin']:
         except Exception as e:
             log(e)
             print(e)
-            #st.write(e)
-
 
     if st.session_state['datatable']:
         col4, col5 = st.columns(2)
@@ -125,27 +123,31 @@ if st.session_state['loggedin']:
                 st.date_input('Starting Date', value='today', key='start_date')
             with sub2:
                 st.date_input('Ending Date', value='today', key='end_date')
-            st.text_area(label='Industry Section')
-            st.text_area(label='Text Sample Selection', value='Sample information')
             history=None
             if st.button('Run Time Sentiment'):
                 history = createoverview()
                 st.session_state['history'] = history
+                
 
                 
         if isinstance(history, pd.DataFrame): 
+            flat_list = [
+                x
+                for x in history['comment'].values
+            ]
+            st.divider()
+            answer = overviewanalysis(flat_list)
+            st.session_state['current_answer'] = answer
+            st.write(answer)
+            st.download_button('Download Analysis Highlights', st.session_state['current_answer'], 'Analysis.txt', mime='text/txt')
+            st.divider()
             st.dataframe(st.session_state['history'], width=1800, selection_mode=['multi-column', 'multi-row'])
             flat_list = [
                 x
                 for x in history['comment'].values
             ]
-            answer = overviewanalysis(flat_list)
-            st.session_state['current_answer'] = answer
-            st.write('Analysis highlights')
-            st.download_button('Download Analysis', st.session_state['current_answer'], 'Analysis.txt', mime='text/txt')
-            st.write(answer)
         else:
-            st.write('No Dataframe')
+            st.write('')
 
 else:
     st.write('Please log in to access analysis page')
