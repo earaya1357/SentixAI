@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from log.logger import log
 from db.dbcalls import *
-import os, json
+import json
 from datetime import datetime as dt
 import dateutil.parser as parser
 from geminiapi import askgemini, overviewanalysis
@@ -91,10 +91,12 @@ if st.session_state['loggedin']:
             st.divider()
             answer = overviewanalysis(flat_list)
             st.session_state['current_answer'] = answer
-            st.write(answer)
-            st.download_button('Download Analysis Highlights', st.session_state['current_answer'], 'Analysis.txt', mime='text/txt')
+            with st.expander('ANALYSIS HIGHLIGHTS'):
+                st.write(answer)
+                st.download_button('Download Analysis Highlights', st.session_state['current_answer'], 'Analysis.txt', mime='text/txt')
             st.divider()
-            st.dataframe(st.session_state['history'], width=1800, selection_mode=['multi-column', 'multi-row'])
+            with st.expander('DATA ANALYZED'):
+                st.dataframe(st.session_state['history'], width=1800, selection_mode=['multi-column', 'multi-row'])
             
         else:
             st.write('')

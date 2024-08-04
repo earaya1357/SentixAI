@@ -1,12 +1,13 @@
-import PIL.Image
 import google.generativeai as genai
 from google.generativeai.types import HarmBlockThreshold, HarmCategory
 import PIL, os
 import pandas as pd
+from dotenv import load_dotenv 
 
 
-pword = os.environ['KEY2']
-genai.configure(api_key=pword)
+load_dotenv()
+pword = os.getenv('KEY2')
+genai.configure(api_key="AIzaSyCkE7dti-579Edq7NkqfinIsapAWcR08_c")
 
 config = {
     'temperature': 0.9,
@@ -15,6 +16,7 @@ config = {
     'max_output_tokens': 3000,
     'response_mime_type': 'text/plain',
 }
+
 
 safety_settings={
         HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,

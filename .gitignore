@@ -4,4 +4,4 @@ log/SentixAI_log.log
 db/Base.db
 sentimentapi.py
 Base.session.sql
-.env
+.env.local

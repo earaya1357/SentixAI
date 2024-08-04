@@ -6,13 +6,14 @@ from pydantic import SecretStr
 from pymongo.mongo_client import MongoClient
 from pymongo.collation import Collation
 from models.Models import NewUser, User, Part, Sentiment
-
+from dotenv import load_dotenv 
 
 #Mongodb connection and data collection function
 def connection()->MongoClient|str:
     """Creates the connection needed to access the database."""
     try:
-        pword = os.environ['KEY1']
+        load_dotenv()
+        pword = "fzcfABqvyVqxSvZ2"#os.getenv('KEY1')
         uri = f"mongodb+srv://temp:{pword}@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
         return client
