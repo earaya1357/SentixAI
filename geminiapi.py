@@ -1,13 +1,12 @@
 import PIL.Image
 import google.generativeai as genai
 from google.generativeai.types import HarmBlockThreshold, HarmCategory
-import PIL
+import PIL, os
 import pandas as pd
 
 
-with open('geminikey.txt', 'r') as k:
-    key = k.readlines()
-genai.configure(api_key=key[0])
+pword = os.environ['KEY2']
+genai.configure(api_key=pword)
 
 config = {
     'temperature': 0.9,

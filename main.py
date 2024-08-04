@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 from db.dbcalls import connection, getuser, createuser
 from log.logger import log
+from time import sleep
 
 conn = connection()
 st.session_state['connection'] = conn
@@ -24,6 +25,7 @@ if not st.session_state['loggedin']:
                 st.session_state['loggedin'] = True
                 st.session_state['session_info'] = info
                 log(f'User: {st.session_state['session_info'].username}, successfully logged in.')
+                st.rerun()
             else:
                 log(f'Login failed') 
                 st.write(info)
@@ -39,10 +41,19 @@ if not st.session_state['loggedin']:
         age = signupform.text_input('Age')
         company = signupform.text_input('Company')
         if signupform.form_submit_button('Sign Up'):
-            if password == repassword:
+            try:
                 data = {'username': username, 'password': password, 'repassword': repassword, 'firstname': firstname, 'lastname': lastname, 'email': email, 'age': int(age), 'company': company}
                 returnval = createuser(client=conn, data=data)
-                st.write(returnval)
+                if isinstance(returnval, bool):
+                    st.write('User Successfully Created')
+                    sleep(3)
+                    st.rerun()
+                elif 'User Data Input Error:' in returnval:
+                    st.write(returnval)
+                
+            except Exception as e:
+                st.write(e)
+
 
 if st.session_state['loggedin']:
     st.write(f'<h2>Welcome {st.session_state['session_info'].username}</h2>', unsafe_allow_html=True)

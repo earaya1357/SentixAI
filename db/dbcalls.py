@@ -1,6 +1,7 @@
 from log.logger import log
 import certifi
 import pickle
+import os
 from pydantic import SecretStr
 from pymongo.mongo_client import MongoClient
 from pymongo.collation import Collation
@@ -11,7 +12,8 @@ from models.Models import NewUser, User, Part, Sentiment
 def connection()->MongoClient|str:
     """Creates the connection needed to access the database."""
     try:
-        uri = f"mongodb+srv://temp:@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
+        pword = os.environ['KEY1']
+        uri = f"mongodb+srv://temp:{pword}@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
         return client
     except Exception as e:
@@ -39,11 +41,12 @@ def createuser(client: MongoClient, data: dict)->bool|str:
     db = client['SentixAI']
     collection = db['Users']
     try:
-        newuser = NewUser(**data)
+        newuser = NewUser(**data)            
 
     except Exception as e:
         log(f'User Data Input Error: {e}')
         return f'User Data Input Error: {e}'
+        
     
     try:
         collection.insert_one(newuser.__dict__)

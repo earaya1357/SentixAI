@@ -13,24 +13,27 @@ class User(BaseModel):
 
 
 class NewUser(BaseModel):
-    username: str
-    password: str
-    repassword: str
+    username: str = Field(..., min_length=5, pattern=r'[0-9]')
+    password: str = Field(..., min_length=8, pattern=r'[!@#%&]')
+    repassword: str = Field(..., min_length=8, pattern=r'[!@#%&]')
     firstname: str
     lastname: str
     email: EmailStr
-    age: int
+    age: int = Field(..., ge=18)
     company: str
 
-    def checkpassword(password, repassword):
+
+    #@field_validator('password','repassword')
+    #@classmethod
+    def checkpassword(password, repassword)->None|str:
         if password != repassword:
-            return False
-        return True
+            raise ValueError('Password does not match')
     
-    def fieldscomplete(username, password, repassword, firstname, lastname, email, age, company):
-        if not username and password and repassword and firstname and lastname and email and age and company:
-            return False
-        return True
+    #@field_validator('username','firstname', 'lastname', 'email', 'age', 'company')
+    #@classmethod
+    def fieldscomplete(username,firstname, lastname, email, age, company)->None|str:
+        if not username and firstname and lastname and email and age and company:
+            raise ValueError('Not all fields are complete')
 
 
 class Part(BaseModel):
