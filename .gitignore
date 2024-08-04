@@ -2,6 +2,5 @@ __pycache__
 sg
 log/SentixAI_log.log
 db/Base.db
-sentimentapi.py
 Base.session.sql
 .env.local
