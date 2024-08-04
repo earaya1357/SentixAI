@@ -1,6 +1,6 @@
 from log.logger import log
 import certifi
-import pickle
+import datetime as dt
 import os
 from pydantic import SecretStr
 from pymongo.mongo_client import MongoClient
@@ -98,25 +98,23 @@ def recordsentiment(client: MongoClient, data:dict)->tuple[bool,str]:
         sentiment = Sentiment(**data)
     except Exception as e:
         log(f'Sentiment Anlysis Error: {e}')
-        print(f'Sentiment Anlysis Error: {e}')
         return False, f'Sentiment Anlysis Error: {e}'
     try:
         collection.insert_one(sentiment.__dict__)
         return True, 'Sentiment recorded'
     except Exception as e:
         log(f'Sentiment Analysis Upload Error: {e}')
-        print(f'Sentiment Analysis Upload Error: {e}')
         return False, f'Sentiment Analysis Upload Error: {e}'
     
 
-def sentimentoverview(client: MongoClient, company:str, productname:str):
+def sentimentoverview(client: MongoClient, company:str, productname:str, start_date:dt.datetime, end_date:dt.datetime):
     """Retrieves the full history of sentiment anlaysis"""
     db = client['SentixAI']
     collection = db['Analysis']
     try:
-        sentiments = collection.find({'company': company, 'productname': productname}, {'_id':0, 'tasks': 0})
+        query = { "timestamp": { "$gte": start_date, "$lte": end_date }, "company": company, "productname": productname }
+        sentiments = collection.find(query, {'_id':0, 'tasks': 0})
         log('Part data collected and returned')
-
         return True, sentiments
     except Exception as e:
         log(f'Get Parts Error: {e}')

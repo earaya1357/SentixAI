@@ -22,15 +22,11 @@ class NewUser(BaseModel):
     age: int = Field(..., ge=18)
     company: str
 
-
-    #@field_validator('password','repassword')
-    #@classmethod
     def checkpassword(password, repassword)->None|str:
         if password != repassword:
             raise ValueError('Password does not match')
     
-    #@field_validator('username','firstname', 'lastname', 'email', 'age', 'company')
-    #@classmethod
+
     def fieldscomplete(username,firstname, lastname, email, age, company)->None|str:
         if not username and firstname and lastname and email and age and company:
             raise ValueError('Not all fields are complete')
