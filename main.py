@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_option_menu import option_menu
 from db.dbcalls import connection, getuser, createuser
 from log.logger import log
 from time import sleep
@@ -45,7 +44,7 @@ if not st.session_state['loggedin']:
     with st.expander('Sign Up', expanded=False):
         signupform = st.form('Sign Up')
         username = signupform.text_input('Username')
-        password = signupform.text_input('Password', type='password')
+        password = signupform.text_input('Password (Must be 8 characters long and contain at least 1 special character !@#%&)', type='password')
         repassword = signupform.text_input('Re-Password', type='password')
         firstname = signupform.text_input('First Name')
         lastname = signupform.text_input('Last Name')
