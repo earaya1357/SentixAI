@@ -5,7 +5,7 @@ from db.dbcalls import *
 from db.dbcalls import createpart
 
 if st.session_state['loggedin']:
-    with st.expander('Add Product to Portfolio'):
+    with st.expander('Add Product to Portfolio', expanded=True):
         newProdForm =  st.form('NewProductForm')
         productname = newProdForm.text_input('Product Name: ')
         description = newProdForm.text_area('Description: ')
