@@ -3,6 +3,18 @@ from streamlit_option_menu import option_menu
 from db.dbcalls import connection, getuser, createuser
 from log.logger import log
 from time import sleep
+import numpy as np
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    pass
+with c2:
+    st.image('material/Sentix AI logo.png', width=300)
+
+with c3:
+    pass
+
+st.write('<center><h1>Welcome to Sentix AI</h1></center>', unsafe_allow_html=True)
 
 conn = connection()
 st.session_state['connection'] = conn
@@ -56,6 +68,6 @@ if not st.session_state['loggedin']:
 
 
 if st.session_state['loggedin']:
-    st.write(f'<h2>Welcome {st.session_state['session_info'].username}</h2>', unsafe_allow_html=True)
+    st.write(f'<h3>Welcome {st.session_state['session_info'].username}</h3>', unsafe_allow_html=True)
 
             

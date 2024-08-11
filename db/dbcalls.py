@@ -14,7 +14,8 @@ def connection()->MongoClient|str:
     try:
         load_dotenv()
         pword = os.getenv('KEY1')
-        uri = f"mongodb+srv://temp:{pword}@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
+        uname = os.getenv('KEY3')
+        uri = f"mongodb+srv://{uname}:{pword}@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
         return client
     except Exception as e:

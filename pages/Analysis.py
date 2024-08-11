@@ -10,6 +10,10 @@ from geminiapi import askgemini, overviewanalysis
 import numpy as np
 from db.dbcalls import getallparts, sentimentoverview
 
+st.set_page_config(layout="wide")
+st.write('<center><h2>Analysis</h2></center>', unsafe_allow_html=True)
+
+
 def createoverview(start_date: str, end_date:str):
     start_date = parser.parse(start_date)
     end_date = parser.parse(end_date)
@@ -40,7 +44,7 @@ if st.session_state['loggedin']:
     #Setup for the page and database for temporary storage
 
     st.session_state['startup'] = False
-    st.set_page_config(layout="wide")
+    
 
     st.session_state['datatable'] = False
     st.session_state['edited_data'] = None

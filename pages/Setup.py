@@ -4,6 +4,9 @@ from log.logger import log
 from db.dbcalls import *
 from db.dbcalls import createpart
 
+st.write('<center><h2>Setup</h2></center>', unsafe_allow_html=True)
+
+
 if st.session_state['loggedin']:
     with st.expander('Add Product to Portfolio', expanded=True):
         newProdForm =  st.form('NewProductForm')
