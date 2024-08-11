@@ -3,4 +3,4 @@ sg
 log/SentixAI_log.log
 db/Base.db
 Base.session.sql
-.env.local
+.env

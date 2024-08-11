@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 pword = os.getenv('KEY2')
-genai.configure(api_key="AIzaSyCkE7dti-579Edq7NkqfinIsapAWcR08_c")
+genai.configure(api_key=pword)
 
 config = {
     'temperature': 0.9,

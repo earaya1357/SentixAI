@@ -17,10 +17,10 @@ if st.session_state['loggedin']:
             else:
                 st.write(success)
 
-    with st.expander('General Settings'):
-        apiKeyForm =  st.form('API Key Information')
-        apiKeyForm.text_input('Gemini API Key: ', type='password')
-        apiKeyForm.form_submit_button('Submit')
+    #with st.expander('General Settings'):
+    #    apiKeyForm =  st.form('API Key Information')
+    #    apiKeyForm.text_input('Gemini API Key: ', type='password')
+    #    apiKeyForm.form_submit_button('Submit')
 
 else:
     st.write('Please log in to access setup page')

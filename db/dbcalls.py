@@ -13,7 +13,7 @@ def connection()->MongoClient|str:
     """Creates the connection needed to access the database."""
     try:
         load_dotenv()
-        pword = "fzcfABqvyVqxSvZ2"#os.getenv('KEY1')
+        pword = os.getenv('KEY1')
         uri = f"mongodb+srv://temp:{pword}@sentixai.tyiq05h.mongodb.net/?retryWrites=true&w=majority&appName=SentixAI"
         client = MongoClient(uri, tlsCAFile=certifi.where())
         return client
