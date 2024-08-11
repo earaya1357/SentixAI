@@ -43,7 +43,7 @@ if not st.session_state['loggedin']:
 
     with st.expander('Sign Up', expanded=False):
         signupform = st.form('Sign Up')
-        username = signupform.text_input('Username')
+        username = signupform.text_input('Username (Must 5 characters long and contain a number)')
         password = signupform.text_input('Password (Must be 8 characters long and contain at least 1 special character !@#%&)', type='password')
         repassword = signupform.text_input('Re-Password', type='password')
         firstname = signupform.text_input('First Name')
